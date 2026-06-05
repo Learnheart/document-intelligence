@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "if": "Bash(git commit*)",
+            "command": "if git diff --cached --name-only -- CHANGELOG.md | grep -q .; then exit 0; else echo 'BLOCKED by check-changelog hook: CHANGELOG.md is not staged. Per CLAUDE.md Rule 5, log this change in CHANGELOG.md and run: git add CHANGELOG.md  then commit again.' >&2; exit 2; fi",
+            "statusMessage": "Checking CHANGELOG.md is staged"
+          }
+        ]
+      }
+    ]
+  }
+}

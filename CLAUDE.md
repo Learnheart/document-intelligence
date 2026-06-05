@@ -60,16 +60,17 @@ summary: <one-line description of what this is about>
 - Deploy to `dev` environment first, verify, then deploy to `prod`
 - When modifying `app.yaml.tpl`, verify the generated `app.yaml` has correct values via dry run
 
-### 5. Changelog — Track Every Change
+### 5. Changelog — Log Every Update Before Commit
 
-- **ALWAYS** update `CHANGELOG.md` when making any code change
+- **ALWAYS** update `CHANGELOG.md` **BEFORE committing code** — the changelog entry and the code change go in the **same commit**
+- Keep the running log format below — one entry per update, newest on top
 - Follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`
   - **MAJOR** — breaking changes (API contract changes, data model changes, removed features)
-  - **MINOR** — new features, new agents, new shared components
+  - **MINOR** — new features, new shared components
   - **PATCH** — bug fixes, prompt tuning, styling tweaks, doc updates
 - Group entries under: `Added`, `Changed`, `Fixed`, `Removed`
-- Tag each entry with the affected agent(s) in brackets, e.g. `[summarizer]`, `[shared]`, `[all]`
-- If you are an AI agent: **update CHANGELOG.md as part of every commit**
+- Tag each entry with the affected feature(s) in brackets, e.g. `[ocr]`, `[shared]`, `[all]`
+- If you are an AI agent: **stop and update `CHANGELOG.md` before staging the commit**, then commit both together
 - **Enforced by Kiro hook**: `.kiro/hooks/check-changelog.sh` blocks `git commit` if `CHANGELOG.md` is not staged
 
 ---
@@ -209,17 +210,12 @@ resources:
 
 ---
 
-## Adding a New Agent
+## Adding a New Feature
 
-1. Create `src/agents/<name>/` with `backend/`, `frontend/` (optional), and `app.yaml.tpl`
-2. Create `src/agents/<name>/AGENT.md` with full agent details (use any existing agent as template)
-3. Backend pattern: standalone FastAPI + router + CORS + file upload (if needed) + SPA serving + health
-4. Frontend pattern: Vite project, render page directly (no AgentLayout), copy shared components from `src/shared/frontend/`
-5. Add governance notices: `AdvisoryNotice` above chat/input areas, `PiiNotice` below file upload components (import from `GovernanceBanner.tsx`)
-6. Create MLflow experiment: `databricks workspace mkdirs "/super-agent" && databricks experiments create-experiment "/super-agent/<name>"`
-7. Add `MLFLOW_TRACKING_URI`, `MLFLOW_EXPERIMENT_ID` env vars and `mlflow-experiment` resource to `app.yaml.tpl`
-8. Add a row to the Agent Index table in this file
-9. Add `<NAME>_URL` env var to `src/super-agent/app.yaml.tpl`
-10. Add agent card to super-agent's `App.tsx` (`AGENTS` array)
-11. Deploy: `./deploy.sh --env dev <name>` then `./deploy.sh --env dev super-agent`
-12. Update `CHANGELOG.md`
+1. **Plan first** — create `docs/YYYY-MM-DD/<feature-name>/plan.md` with the metadata block BEFORE writing any code (see Rule 1)
+2. Implement the feature under the relevant module; reuse shared code in `src/shared/` instead of duplicating
+3. If the feature touches `src/shared/`, coordinate first and update the Shared Module Reference table in this file (see Rule 2)
+4. Add governance notices where applicable: `AdvisoryNotice` above chat/input areas, `PiiNotice` below file upload components (import from `GovernanceBanner.tsx`)
+5. Update the feature's own docs / `AGENT.md` if behavior, routes, or env vars change
+6. Run `./deploy.sh --env dev --dry-run <service>`, deploy to `dev`, verify, then `prod` (see Rule 4)
+7. **Update `CHANGELOG.md` BEFORE committing** — changelog entry + code change in the same commit (see Rule 5)
